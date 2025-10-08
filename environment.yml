@@ -1,0 +1,15 @@
+channels:
+- conda-forge
+- nodefaults  
+dependencies:
+- pandas
+- requests
+- autopep8
+- pylint
+- black
+- isort
+- mypy
+- pip
+- pytest
+- pytest-cov
+- make
