@@ -1,6 +1,7 @@
 '''Module providing video statistics from YouTube API.'''
 import csv
 import os
+from datetime import date
 
 import requests
 from dotenv import load_dotenv
@@ -101,4 +102,4 @@ if __name__ == "__main__":
 
     # Sauvegarder directement en CSV avec le générateur
     save_videos_to_csv(extract_videos_infos(
-        videos_data), f'data/youtube_videos_{CHANNEL_HANDLE}.csv')
+        videos_data), f'data/youtube_videos_{CHANNEL_HANDLE}_{date.today()}.csv')
