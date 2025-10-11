@@ -1,22 +1,24 @@
 '''Module providing video statistics from YouTube API.'''
 import csv
-import os
 from datetime import date
 
 import requests
-from dotenv import load_dotenv
+from airflow.decorators import task
+from airflow.models import Variable
 
-load_dotenv()
-API_KEY = os.getenv("API_KEY")
-CHANNEL_HANDLE = os.getenv("CHANNEL_HANDLE")
+API_KEY = Variable.get("API_KEY")
+CHANNEL_HANDLE = Variable.get("CHANNEL_HANDLE")
 MAX_RESULTS = 50
 
 
+@task
 def get_channel_playlist_id():
     '''Fetches the channel ID for the given channel.'''
     try:
-        url = f'https://youtube.googleapis.com/youtube/v3/channels?part=contentDetails&forHandle={
-            CHANNEL_HANDLE}&key={API_KEY}'
+        url = (
+            f'https://youtube.googleapis.com/youtube/v3/channels?'
+            f'part=contentDetails&forHandle={CHANNEL_HANDLE}&key={API_KEY}'
+        )
         response = requests.get(url, timeout=10)
         data = response.json()
         channel_playlist_id = data['items'][0]['contentDetails']['relatedPlaylists']['uploads']
@@ -29,8 +31,10 @@ def get_videos_id(playlist_id):
     '''Fetches video details from the given playlist ID.'''
     videos_ids = []
     page_token = None
-    url = f'https://www.googleapis.com/youtube/v3/playlistItems?part=contentDetails&playlistId={
-        playlist_id}&maxResults={MAX_RESULTS}&key={API_KEY}'
+    url = (
+        f'https://www.googleapis.com/youtube/v3/playlistItems?'
+        f'part=contentDetails&playlistId={playlist_id}&maxResults={MAX_RESULTS}&key={API_KEY}'
+    )
     try:
         while True:
             if page_token:
@@ -45,19 +49,25 @@ def get_videos_id(playlist_id):
             page_token = data.get('nextPageToken')
             if not page_token:
                 break
-            url = f'https://www.googleapis.com/youtube/v3/playlistItems?part=contentDetails&playlistId={
-                playlist_id}&maxResults={MAX_RESULTS}&pageToken={page_token}&key={API_KEY}'
+            url = (
+                f'https://www.googleapis.com/youtube/v3/playlistItems?'
+                f'part=contentDetails&playlistId={playlist_id}'
+                f'&maxResults={MAX_RESULTS}&pageToken={page_token}&key={API_KEY}'
+            )
     except requests.exceptions.RequestException as e:
         raise e
     return videos_ids
 
 
+@task
 def extract_videos_infos(videos_ids):
     '''Extracts detailed statistics for each video ID using a generator.'''
     for video in videos_ids:
         video_id = video['video_id']
-        url = f'https://youtube.googleapis.com/youtube/v3/videos?part=ContentDetails&id={
-            video_id}&key={API_KEY}&part=snippet&part=statistics'
+        url = (
+            f'https://youtube.googleapis.com/youtube/v3/videos?'
+            f'part=ContentDetails&id={video_id}&key={API_KEY}&part=snippet&part=statistics'
+        )
         try:
             response = requests.get(url, timeout=10)
             data = response.json()
@@ -77,8 +87,10 @@ def extract_videos_infos(videos_ids):
             raise e
 
 
-def save_videos_to_csv(videos_generator, filename='videos_data.csv'):
+@task
+def save_videos_to_csv(videos_generator):
     '''Saves video data from generator to CSV file.'''
+    filename = f'data/youtube_videos_{CHANNEL_HANDLE}_{date.today()}.csv'
     with open(filename, 'w', newline='', encoding='utf-8') as csvfile:
         fieldnames = ['video_id', 'title', 'published_at', 'duration',
                       'view_count', 'like_count', 'comment_count']
@@ -92,14 +104,11 @@ def save_videos_to_csv(videos_generator, filename='videos_data.csv'):
         for video_data in videos_generator:
             writer.writerow(video_data)
             video_count += 1
-            print(f"Vidéo {video_count} sauvegardée: {video_data['title']}")
-
-        print(f"\nTotal de {video_count} vidéos sauvegardées dans {filename}")
+    return f'Saved {video_count} videos to {filename}'
 
 
 if __name__ == "__main__":
-    videos_data = get_videos_id(get_channel_playlist_id())
-
-    # Sauvegarder directement en CSV avec le générateur
-    save_videos_to_csv(extract_videos_infos(
-        videos_data), f'data/youtube_videos_{CHANNEL_HANDLE}_{date.today()}.csv')
+    channel_handle = get_channel_playlist_id()
+    videos_data = get_videos_id(channel_handle)
+    extract_videos_data = extract_videos_infos(videos_data)
+    save_videos_to_csv(extract_videos_data)
