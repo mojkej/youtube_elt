@@ -27,6 +27,7 @@ def get_channel_playlist_id():
         raise e
 
 
+@task
 def get_videos_id(playlist_id):
     '''Fetches video details from the given playlist ID.'''
     videos_ids = []
