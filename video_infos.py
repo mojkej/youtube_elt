@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 API_KEY = os.getenv("API_KEY")
-CHANNEL_HANDLE = os.getenv("CHANNEL_ID")
+CHANNEL_HANDLE = os.getenv("CHANNEL_HANDLE")
 MAX_RESULTS = 50
 
 
