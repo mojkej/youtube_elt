@@ -15,3 +15,5 @@ dependencies:
 - make
 - python-dotenv
 - apache-airflow
+- psycopg2
+- apache-airflow-providers-postgres
