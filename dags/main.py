@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 import pendulum
 from airflow.decorators import dag
 from api.video_infos import (
-    extract_videos_infos,
+    collect_videos_data,
     get_channel_playlist_id,
     get_videos_id,
     save_videos_to_csv,
@@ -43,9 +43,9 @@ def youtube_extract_dag():
 
     videos_ids = get_videos_id(playlist_id)
 
-    videos_data = extract_videos_infos(videos_ids)
+    videos_data_list = collect_videos_data(videos_ids)
 
-    csv_result = save_videos_to_csv(videos_data)
+    csv_result = save_videos_to_csv(videos_data_list)
 
     return csv_result
 

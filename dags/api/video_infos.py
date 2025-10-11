@@ -60,7 +60,6 @@ def get_videos_id(playlist_id):
     return videos_ids
 
 
-@task
 def extract_videos_infos(videos_ids):
     '''Extracts detailed statistics for each video ID using a generator.'''
     for video in videos_ids:
@@ -89,9 +88,23 @@ def extract_videos_infos(videos_ids):
 
 
 @task
-def save_videos_to_csv(videos_generator):
-    '''Saves video data from generator to CSV file.'''
+def collect_videos_data(videos_ids):
+    '''Collecte toutes les données des vidéos depuis le générateur dans une liste.'''
+    videos_data_list = []
+    video_count = 0
+
+    for video_data in extract_videos_infos(videos_ids):
+        videos_data_list.append(video_data)
+        video_count += 1
+
+    return videos_data_list
+
+
+@task
+def save_videos_to_csv(videos_data_list):
+    '''Sauvegarde une liste de données vidéos dans un fichier CSV.'''
     filename = f'data/youtube_videos_{CHANNEL_HANDLE}_{date.today()}.csv'
+
     with open(filename, 'w', newline='', encoding='utf-8') as csvfile:
         fieldnames = ['video_id', 'title', 'published_at', 'duration',
                       'view_count', 'like_count', 'comment_count']
@@ -100,16 +113,15 @@ def save_videos_to_csv(videos_generator):
         # Écrire l'en-tête
         writer.writeheader()
 
-        # Écrire chaque ligne au fur et à mesure
-        video_count = 0
-        for video_data in videos_generator:
+        # Écrire toutes les données depuis la liste
+        for video_data in videos_data_list:
             writer.writerow(video_data)
-            video_count += 1
-    return f'Saved {video_count} videos to {filename}'
+
+    return filename
 
 
 if __name__ == "__main__":
     channel_handle = get_channel_playlist_id()
     videos_data = get_videos_id(channel_handle)
-    extract_videos_data = extract_videos_infos(videos_data)
-    save_videos_to_csv(extract_videos_data)
+    videos_list = collect_videos_data(videos_data)
+    save_videos_to_csv(videos_list)
