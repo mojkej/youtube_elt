@@ -14,3 +14,4 @@ dependencies:
 - pytest-cov
 - make
 - python-dotenv
+- apache-airflow
