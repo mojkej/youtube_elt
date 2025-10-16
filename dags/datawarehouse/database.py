@@ -46,7 +46,7 @@ def staging_table():
                     update_data_in_db(connect, cur, schema, row)
                 else:
                     insert_data_to_db(connect, cur, schema, row)
-        video_ids_csv = [row['video_id'] for row in data]
+        video_ids_csv = {row['video_id'] for row in data}
         videos_ids_delete = set(table_ids) - video_ids_csv
         if videos_ids_delete:
             delete_data_from_db(connect, cur, schema, videos_ids_delete)

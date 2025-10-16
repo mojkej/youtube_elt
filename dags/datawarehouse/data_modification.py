@@ -21,7 +21,8 @@ def insert_data_to_db(connection, cursor, schema_name, row):
                 """
             cursor.execute(insert_query, row)
             connection.commit()
-            logger.info("Data inserted/updated successfully.")
+            logger.info(
+                "Data inserted/updated successfully for row with video_id %s.", row[video_id])
         else:
             video_id = "video_id"
             insert_query = f"""

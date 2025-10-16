@@ -8,6 +8,7 @@ from api.video_infos import (
     get_videos_id,
     save_videos_to_csv,
 )
+from datawarehouse.database import core_table, staging_table
 
 local_tz = pendulum.timezone("Europe/Paris")
 # Default arguments for the DAG
@@ -52,3 +53,25 @@ def youtube_extract_dag():
 
 # Instancier le DAG
 youtube_extract_dag()
+
+
+@dag(
+    'update_db',
+    default_args=default_args,
+    description='DAG to update YouTube video data in the database',
+    schedule_interval='15 0 * * *',
+    catchup=False,
+    tags=['youtube', 'elt', 'csv'],
+)
+def youtube_update_db_dag():
+    """
+    DAG pour extraire les données YouTube avec TaskFlow API
+    """
+    staging = staging_table()
+    core = core_table()
+
+    return staging >> core
+
+
+# Instancier le DAG
+youtube_update_db_dag()

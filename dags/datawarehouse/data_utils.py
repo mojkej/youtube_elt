@@ -1,9 +1,9 @@
-from airflow.models import Variable
 from airflow.providers.postgres.hooks.postgres import PostgresHook
 from psycopg2.extras import RealDictCursor
 
-ELT_DATABASE_NAME = Variable.get("ELT_DATABASE_NAME")
+ELT_DATABASE_NAME = "elt_db"
 TABLE_NAME = "yt_api"
+POSTGRES_DB_CONN_ID = "postgres_db_yt_elt"
 
 
 def get_postgres_connection():
@@ -11,7 +11,7 @@ def get_postgres_connection():
     Establishes and returns a connection to the PostgreSQL database using Airflow's PostgresHook.
     """
     pg_hook = PostgresHook(
-        postgres_conn_id='postgres_db_elt', database=ELT_DATABASE_NAME)
+        postgres_conn_id=POSTGRES_DB_CONN_ID, database=ELT_DATABASE_NAME)
     connection = pg_hook.get_conn()
     cur = connection.cursor(cursor_factory=RealDictCursor)
     return connection, cur
@@ -42,34 +42,37 @@ def create_schema(schema_name):
 
 def create_table(schema_name):
     """
-    Creates a table in the PostgreSQL database if it does not already exist.
+    Crée la table dans le schéma donné. S'assure que le schéma existe et utilise
+    uniquement la définition des colonnes (pour éviter d'imbriquer CREATE TABLE).
     """
     connection, cursor = get_postgres_connection()
-    table_staging = f"""
-    CREATE TABLE IF NOT EXISTS {TABLE_NAME} (
-        video_id VARCHAR(11) PRIMARY KEY NOT NULL,
-        title TEXT NOT NULL,
-        published_at TIMESTAMP NOT NULL,
-        view_count INT,
-        like_count INT,
-        comment_count INT,
-        duration VARCHAR(20) NOT NULL,);"""
-    table_core = f"""
-    CREATE TABLE IF NOT EXISTS {TABLE_NAME} (
-        video_id VARCHAR(11) PRIMARY KEY NOT NULL,
-        title TEXT NOT NULL,
-        published_at TIMESTAMP NOT NULL,
-        view_count INT,
-        like_count INT,
-        comment_count INT,
-        duration TIME NOT NULL);"""
     try:
-        if schema_name == "staging":
-            cursor.execute(
-                f"CREATE TABLE IF NOT EXISTS {schema_name}.{TABLE_NAME} ({table_staging});")
-        else:
-            cursor.execute(
-                f"CREATE TABLE IF NOT EXISTS {schema_name}.{TABLE_NAME} ({table_core});")
+        # s'assurer que le schema existe
+        cursor.execute(f"CREATE SCHEMA IF NOT EXISTS {schema_name};")
+
+        # définitions des colonnes (sans CREATE TABLE)
+        table_staging_columns = """
+            video_id VARCHAR(11) PRIMARY KEY NOT NULL,
+            title TEXT NOT NULL,
+            published_at TIMESTAMP NOT NULL,
+            view_count INT,
+            like_count INT,
+            comment_count INT,
+            duration VARCHAR(20) NOT NULL
+        """
+        table_core_columns = """
+            video_id VARCHAR(11) PRIMARY KEY NOT NULL,
+            title TEXT NOT NULL,
+            published_at TIMESTAMP NOT NULL,
+            view_count INT,
+            like_count INT,
+            comment_count INT,
+            duration TIME NOT NULL
+        """
+
+        cols = table_staging_columns if schema_name == "staging" else table_core_columns
+        create_sql = f"CREATE TABLE IF NOT EXISTS {schema_name}.{TABLE_NAME} ({cols});"
+        cursor.execute(create_sql)
         connection.commit()
     except Exception as e:
         connection.rollback()
