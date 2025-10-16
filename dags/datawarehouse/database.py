@@ -76,7 +76,7 @@ def core_table():
         table_ids = get_videos_ids_from_db(schema)
         current_videos_ids = set()
 
-        cur.execute(f"SELECT * FROM {schema}.{TABLE_NAME};")
+        cur.execute(f"SELECT * FROM staging.{TABLE_NAME};")
         rows = cur.fetchall()  # because we don't have a large amount of data
         for row in rows:
             current_videos_ids.add(row['video_id'])
