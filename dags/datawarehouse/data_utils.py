@@ -3,6 +3,7 @@ from airflow.providers.postgres.hooks.postgres import PostgresHook
 from psycopg2.extras import RealDictCursor
 
 ELT_DATABASE_NAME = Variable.get("ELT_DATABASE_NAME")
+TABLE_NAME = "yt_api"
 
 
 def get_postgres_connection():
@@ -39,27 +40,36 @@ def create_schema(schema_name):
         close_postgres_connection(connection, cursor)
 
 
-def create_table(schema_name, table_name, table_sql):
+def create_table(schema_name):
     """
     Creates a table in the PostgreSQL database if it does not already exist.
     """
     connection, cursor = get_postgres_connection()
-    table_sql = f"""
-    CREATE TABLE IF NOT EXISTS {table_name} (
+    table_staging = f"""
+    CREATE TABLE IF NOT EXISTS {TABLE_NAME} (
         video_id VARCHAR(11) PRIMARY KEY NOT NULL,
         title TEXT NOT NULL,
         published_at TIMESTAMP NOT NULL,
         view_count INT,
         like_count INT,
         comment_count INT,
-        duration TIME NOT NULL,);"""
+        duration VARCHAR(20) NOT NULL,);"""
+    table_core = f"""
+    CREATE TABLE IF NOT EXISTS {TABLE_NAME} (
+        video_id VARCHAR(11) PRIMARY KEY NOT NULL,
+        title TEXT NOT NULL,
+        published_at TIMESTAMP NOT NULL,
+        view_count INT,
+        like_count INT,
+        comment_count INT,
+        duration TIME NOT NULL);"""
     try:
         if schema_name == "staging":
             cursor.execute(
-                f"CREATE TABLE IF NOT EXISTS {schema_name}.{table_name} ({table_sql});")
+                f"CREATE TABLE IF NOT EXISTS {schema_name}.{TABLE_NAME} ({table_staging});")
         else:
             cursor.execute(
-                f"CREATE TABLE IF NOT EXISTS {schema_name}.{table_name} ({table_sql});")
+                f"CREATE TABLE IF NOT EXISTS {schema_name}.{TABLE_NAME} ({table_core});")
         connection.commit()
     except Exception as e:
         connection.rollback()
@@ -68,13 +78,13 @@ def create_table(schema_name, table_name, table_sql):
         close_postgres_connection(connection, cursor)
 
 
-def get_videos_ids_from_db(schema_name, table_name):
+def get_videos_ids_from_db(schema_name):
     """
     Retrieves all video IDs from the specified table in the PostgreSQL database.
     """
     connection, cursor = get_postgres_connection()
     try:
-        cursor.execute(f"SELECT video_id FROM {schema_name}.{table_name};")
+        cursor.execute(f"SELECT video_id FROM {schema_name}.{TABLE_NAME};")
         rows = cursor.fetchall()
         video_ids = [row['video_id'] for row in rows]
         return video_ids
