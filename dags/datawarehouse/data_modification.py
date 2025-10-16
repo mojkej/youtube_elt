@@ -1,119 +1,77 @@
+'''
+Module for inserting, updating, and deleting data in a PostgreSQL database.'''
 import logging
 
 logger = logging.getLogger(__name__)
 TABLE_NAME = "yt_api"
 
 
-def insert_data_to_db(connection, cursor, schema_name, data):
+def insert_data_to_db(connection, cursor, schema_name, row):
     """
     Insère les données dans la table spécifiée de la base de données PostgreSQL.
     """
     try:
         if schema_name == "staging":
-            for row in data:
-                insert_query = f"""
-                INSERT INTO {schema_name}.{TABLE_NAME} 
-                (video_id, title, published_at, duration, view_count, like_count, comment_count)
-                VALUES (%s, %s, %s, %s, %s, %s, %s)
-                ON CONFLICT (video_id) DO UPDATE SET
-                    title = EXCLUDED.title,
-                    published_at = EXCLUDED.published_at,
-                    duration = EXCLUDED.duration,
-                    view_count = EXCLUDED.view_count,
-                    like_count = EXCLUDED.like_count,
-                    comment_count = EXCLUDED.comment_count;
+            video_id = "video_id"
+            insert_query = f"""
+                INSERT INTO {schema_name}.{TABLE_NAME}
+                (video_id, title, published_at, duration,
+                 view_count, like_count, comment_count)
+                VALUES (%(video_id)s, %(title)s, %(published_at)s, %(duration)s, %(view_count)s, %(like_count)s, %(comment_count)s)
                 """
-                cursor.execute(insert_query, (
-                    row['video_id'],
-                    row['title'],
-                    row['published_at'],
-                    row['duration'],
-                    row['view_count'],
-                    row['like_count'],
-                    row['comment_count']
-                ))
+            cursor.execute(insert_query, row)
             connection.commit()
             logger.info("Data inserted/updated successfully.")
         else:
-            for row in data:
-                insert_query = f"""
-                INSERT INTO {schema_name}.{TABLE_NAME} 
-                (video_id, title, published_at, duration, view_count, like_count, comment_count)
-                VALUES (%s, %s, %s, %s, %s, %s, %s)
-                ON CONFLICT (video_id) DO UPDATE SET
-                    title = EXCLUDED.title,
-                    published_at = EXCLUDED.published_at,
-                    duration = EXCLUDED.duration,
-                    view_count = EXCLUDED.view_count,
-                    like_count = EXCLUDED.like_count,
-                    comment_count = EXCLUDED.comment_count;
+            video_id = "video_id"
+            insert_query = f"""
+                INSERT INTO {schema_name}.{TABLE_NAME}
+                (video_id, title, published_at, duration,
+                 view_count, like_count, comment_count)
+                VALUES (%(video_id)s, %(title)s, %(published_at)s, %(duration)s, %(view_count)s, %(like_count)s, %(comment_count)s)
                 """
-                cursor.execute(insert_query, (
-                    row['video_id'],
-                    row['title'],
-                    row['published_at'],
-                    row['duration'],
-                    row['view_count'],
-                    row['like_count'],
-                    row['comment_count']
-                ))
+            cursor.execute(insert_query, row)
             connection.commit()
-            logger.info("Data inserted/updated successfully.")
+            logger.info("Data inserted row with video_id %s successfully.", {
+                        row[video_id]})
     except Exception as e:
         connection.rollback()
-        logger.error("Error inserting data: %s", e)
+        logger.error("Error inserting data with video_id %s: %s",
+                     {row[video_id]}, e)
         raise e
 
 
-def update_data_in_db(connection, cursor, schema_name, data):
+def update_data_in_db(connection, cursor, schema_name, row):
     """
-    Met à jour les données dans la table spécifiée de la base de données PostgreSQL.
+    Updates data in the specified table of the PostgreSQL database.
     """
     try:
         if schema_name == "staging":
-            for row in data:
-                update_query = f"""
-                UPDATE {schema_name}.{TABLE_NAME}
-                SET title = %s,
-                    published_at = %s,
-                    duration = %s,
-                    view_count = %s,
-                    like_count = %s,
-                    comment_count = %s
-                WHERE video_id = %s;
+            update_query = f"""
+            UPDATE {schema_name}.{TABLE_NAME}
+            SET title = %(title)s,
+                published_at = %(published_at)s,
+                duration = %(duration)s,
+                view_count = %(view_count)s,
+                like_count = %(like_count)s,
+                comment_count = %(comment_count)s
+            WHERE video_id = %(video_id)s;
                 """
-                cursor.execute(update_query, (
-                    row['title'],
-                    row['published_at'],
-                    row['duration'],
-                    row['view_count'],
-                    row['like_count'],
-                    row['comment_count'],
-                    row['video_id']
-                ))
+            cursor.execute(update_query, row)
             connection.commit()
             logger.info("Data updated successfully.")
         else:
-            for row in data:
-                update_query = f"""
+            update_query = f"""
                 UPDATE {schema_name}.{TABLE_NAME}
-                SET title = %s,
-                    published_at = %s,
-                    duration = %s,
-                    view_count = %s,
-                    like_count = %s,
-                    comment_count = %s
-                WHERE video_id = %s;
+                SET title = %(title)s,
+                    published_at = %(published_at)s,
+                    duration = %(duration)s,
+                    view_count = %(view_count)s,
+                    like_count = %(like_count)s,
+                    comment_count = %(comment_count)s
+                WHERE video_id = %(video_id)s AND published_at = %(published_at)s;
                 """
-                cursor.execute(update_query, (
-                    row['title'],
-                    row['published_at'],
-                    row['duration'],
-                    row['view_count'],
-                    row['like_count'],
-                    row['comment_count'],
-                    row['video_id']
-                ))
+            cursor.execute(update_query, row)
             connection.commit()
             logger.info("Data updated successfully.")
     except Exception as e:
@@ -124,20 +82,18 @@ def update_data_in_db(connection, cursor, schema_name, data):
 
 def delete_data_from_db(connection, cursor, schema_name, video_ids):
     """
-    Supprime les données de la table spécifiée de la base de données PostgreSQL 
-    en fonction des video_ids.
+    Deletes data from the specified table in the PostgreSQL database 
+    based on the provided video_ids.
     """
     try:
         if schema_name == "staging":
-            for video_id in video_ids:
-                delete_query = f"DELETE FROM {schema_name}.{TABLE_NAME} WHERE video_id = %s;"
-                cursor.execute(delete_query, (video_id,))
+            delete_query = f"DELETE FROM {schema_name}.{TABLE_NAME} WHERE video_id = %s;"
+            cursor.execute(delete_query, (video_ids,))
             connection.commit()
             logger.info("Data deleted successfully.")
         else:
-            for video_id in video_ids:
-                delete_query = f"DELETE FROM {schema_name}.{TABLE_NAME} WHERE video_id = %s;"
-                cursor.execute(delete_query, (video_id,))
+            delete_query = f"DELETE FROM {schema_name}.{TABLE_NAME} WHERE video_id = %s;"
+            cursor.execute(delete_query, (video_ids,))
             connection.commit()
             logger.info("Data deleted successfully.")
     except Exception as e:
