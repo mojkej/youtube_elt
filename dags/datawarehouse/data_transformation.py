@@ -1,10 +1,10 @@
 import re
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 
-def transform_duration(duration):
+def parse_duration(duration):
     """
-    Transforms an ISO 8601 duration string into a PostgreSQL TIME format.
+    Parses an ISO 8601 duration string and returns a timedelta object.
     """
     pattern = re.compile(
         r'PT'              # Start with 'PT'
@@ -19,5 +19,15 @@ def transform_duration(duration):
     hours = int(match.group(1)) if match.group(1) else 0
     minutes = int(match.group(2)) if match.group(2) else 0
     seconds = int(match.group(3)) if match.group(3) else 0
-    total_duration = timedelta(hours=hours, minutes=minutes, seconds=seconds)
-    return total_duration
+    return timedelta(hours=hours, minutes=minutes, seconds=seconds)
+
+
+def transform_data(row):
+    """
+    Transforms a data row by parsing the duration field.
+    """
+    duration = parse_duration(row['duration'])
+    # Convert to time object
+    row['duration'] = (datetime.min + duration).time()
+    row['video_type'] = 'Shorts' if duration.total_seconds() <= 600 else 'Standard'
+    return row

@@ -8,7 +8,7 @@ from datawarehouse.data_modification import (
     insert_data_to_db,
     update_data_in_db,
 )
-from datawarehouse.data_transformation import transform_duration
+from datawarehouse.data_transformation import transform_data
 from datawarehouse.data_utils import (
     close_postgres_connection,
     create_schema,
@@ -81,10 +81,10 @@ def core_table():
         for row in rows:
             current_videos_ids.add(row['video_id'])
             if len(table_ids) == 0:
-                transform_row = transform_duration(row)
+                transform_row = transform_data(row)
                 insert_data_to_db(conn, cur, schema, transform_row)
             else:
-                transform_row = transform_duration(row)
+                transform_row = transform_data(row)
 
                 if transform_row['video_id'] in table_ids:
                     update_data_in_db(conn, cur, schema, transform_row)
