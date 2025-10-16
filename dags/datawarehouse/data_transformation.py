@@ -29,5 +29,5 @@ def transform_data(row):
     duration = parse_duration(row['duration'])
     # Convert to time object
     row['duration'] = (datetime.min + duration).time()
-    row['video_type'] = 'Shorts' if duration.total_seconds() <= 600 else 'Standard'
+    row['video_type'] = 'Shorts' if duration.total_seconds() <= 60 else 'Standard'
     return row
