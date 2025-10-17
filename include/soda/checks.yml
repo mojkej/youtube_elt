@@ -1,0 +1,18 @@
+# Check that there are no null values in video_id column
+checks for yt_api:
+  - missing_count(video_id) = 0
+  - duplicate_count(video_id) = 0
+
+  - like_count_greater_than_video_view_count = 0:
+      name: like_count should not be greater than view_count
+      like_count_greater_than_video_view_count_query:  |
+        SELECT COUNT(*) 
+        FROM yt_api 
+        WHERE "like_count" > "view_count"
+
+  - comment_count_greater_than_video_view_count = 0:
+      name: comment_count should not be greater than view_count
+      comment_count_greater_than_video_view_count_query:  |
+        SELECT COUNT(*) 
+        FROM yt_api 
+        WHERE "comment_count" > "view_count"
