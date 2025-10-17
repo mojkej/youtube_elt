@@ -16,11 +16,11 @@ def youtube_data_quality_check(schema):
     """
     try:
         task = BashOperator(
-            task_id="youtube_data_quality_check",
-            bash_command=f"soda scan -d {DATASOURCE} -c {SODA_PATH}/configurations.yml -v {schema} {SODA_PATH}/checks.yml"
+            task_id="soda_data_quality_check_" + schema,
+            bash_command=f"soda scan -d {DATASOURCE} -c {SODA_PATH}/configurations.yml -v SCHEMA={schema} {SODA_PATH}/checks.yml"
         )
         return task
     except Exception as e:
         logging.error(
-            f"Error creating data quality check task for schema : {schema}")
+            "Error creating data quality check task for schema : %s", schema)
         raise e

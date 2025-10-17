@@ -12,6 +12,9 @@ from data_quality.soda import youtube_data_quality_check
 from datawarehouse.database import core_table, staging_table
 
 local_tz = pendulum.timezone("Europe/Paris")
+
+STAGING_SCHEMA = "staging"
+CORE_SCHEMA = "core"
 # Default arguments for the DAG
 default_args = {
     'owner': 'mojkej',
@@ -49,10 +52,9 @@ def youtube_extract_dag():
 
     csv_result = save_videos_to_csv(videos_data_list)
 
-    return csv_result
+    return playlist_id >> videos_ids >> videos_data_list >> csv_result
 
 
-# Instantiate the DAG
 youtube_extract_dag()
 
 
@@ -74,11 +76,14 @@ def youtube_update_db_dag():
     return staging >> core
 
 
+youtube_update_db_dag()
+
+
 @dag(
     'data_quality_checks',
     default_args=default_args,
     description='DAG to perform data quality checks on YouTube video data',
-    schedule_interval='15 0 * * *',
+    schedule_interval='23 0 * * *',
     catchup=False,
     tags=['data_quality'],
 )
@@ -86,7 +91,10 @@ def youtube_data_quality_checks_dag():
     """
     DAG to perform YouTube data quality checks
     """
-    data_quality_staging = youtube_data_quality_check("staging")
-    data_quality_core = youtube_data_quality_check("core")
+    data_quality_staging = youtube_data_quality_check(STAGING_SCHEMA)
+    data_quality_core = youtube_data_quality_check(CORE_SCHEMA)
 
     return data_quality_staging >> data_quality_core
+
+
+youtube_data_quality_checks_dag()
