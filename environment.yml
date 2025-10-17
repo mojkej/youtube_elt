@@ -14,6 +14,8 @@ dependencies:
 - pytest-cov
 - make
 - python-dotenv
-- apache-airflow
 - psycopg2
-- apache-airflow-providers-postgres
+- pip:
+    - apache-airflow
+    - apache-airflow-providers-postgres
+    - airflow-operators
