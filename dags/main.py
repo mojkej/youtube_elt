@@ -24,10 +24,10 @@ default_args = {
     'email_on_failure': False,
     'email_on_retry': False,
     "max_active_runs": 1,
-    "dagrun_timeout": timedelta(minutes=300),
+    "dagrun_timeout": timedelta(minutes=20),
     'retries': 1,
     "start_date": datetime(2025, 1, 1, tzinfo=local_tz),
-    'retry_delay': timedelta(hours=5),
+    'retry_delay': timedelta(minutes=10),
 }
 
 
