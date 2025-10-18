@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 
 import pendulum
 from airflow.decorators import dag
+from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 from api.video_infos import (
     collect_videos_data,
     get_channel_playlist_id,
@@ -23,10 +24,10 @@ default_args = {
     'email_on_failure': False,
     'email_on_retry': False,
     "max_active_runs": 1,
-    "dagrun_timeout": timedelta(minutes=300),
+    "dagrun_timeout": timedelta(minutes=20),
     'retries': 1,
     "start_date": datetime(2025, 1, 1, tzinfo=local_tz),
-    'retry_delay': timedelta(hours=5),
+    'retry_delay': timedelta(minutes=10),
 }
 
 
@@ -34,7 +35,7 @@ default_args = {
     'produce_csv_youtube',
     default_args=default_args,
     description='DAG to extract YouTube video data',
-    schedule_interval='19 0 * * *',
+    schedule_interval='0 5 * * *',
     # start_date=datetime(2025, 1, 1),
     catchup=False,
     tags=['youtube', 'elt', 'csv'],
@@ -52,7 +53,12 @@ def youtube_extract_dag():
 
     csv_result = save_videos_to_csv(videos_data_list)
 
-    return playlist_id >> videos_ids >> videos_data_list >> csv_result
+    trigger_update_db = TriggerDagRunOperator(
+        task_id='trigger_update_db',
+        trigger_dag_id='update_db',
+    )
+
+    return playlist_id >> videos_ids >> videos_data_list >> csv_result >> trigger_update_db
 
 
 youtube_extract_dag()
@@ -62,7 +68,7 @@ youtube_extract_dag()
     'update_db',
     default_args=default_args,
     description='DAG to update YouTube video data in the database',
-    schedule_interval='15 0 * * *',
+    schedule_interval=None,
     catchup=False,
     tags=['youtube', 'datawarehouse'],
 )
@@ -72,8 +78,12 @@ def youtube_update_db_dag():
     """
     staging = staging_table()
     core = core_table()
+    trigger_data_quality = TriggerDagRunOperator(
+        task_id='trigger_data_quality',
+        trigger_dag_id='data_quality_checks',
+    )
 
-    return staging >> core
+    return staging >> core >> trigger_data_quality
 
 
 youtube_update_db_dag()
@@ -83,7 +93,7 @@ youtube_update_db_dag()
     'data_quality_checks',
     default_args=default_args,
     description='DAG to perform data quality checks on YouTube video data',
-    schedule_interval='23 0 * * *',
+    schedule_interval=None,
     catchup=False,
     tags=['data_quality'],
 )

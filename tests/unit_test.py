@@ -34,8 +34,8 @@ def test_dagbag(dagbag):
     print(dagbag.dags.keys())
     # To Check if the expected task count matches the actual task count
     expected_task_count = {
-        "produce_csv_youtube": 4,
-        "update_db": 2,
+        "produce_csv_youtube": 5,
+        "update_db": 3,
         "data_quality_checks": 2,
     }
     # Check if the expected task count matches the actual task count
