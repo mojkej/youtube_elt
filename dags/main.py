@@ -34,7 +34,7 @@ default_args = {
     'produce_csv_youtube',
     default_args=default_args,
     description='DAG to extract YouTube video data',
-    schedule_interval='19 0 * * *',
+    schedule_interval='0 5 * * *',
     # start_date=datetime(2025, 1, 1),
     catchup=False,
     tags=['youtube', 'elt', 'csv'],
@@ -62,7 +62,7 @@ youtube_extract_dag()
     'update_db',
     default_args=default_args,
     description='DAG to update YouTube video data in the database',
-    schedule_interval='15 0 * * *',
+    schedule_interval='0 8 * * *',
     catchup=False,
     tags=['youtube', 'datawarehouse'],
 )
@@ -83,7 +83,7 @@ youtube_update_db_dag()
     'data_quality_checks',
     default_args=default_args,
     description='DAG to perform data quality checks on YouTube video data',
-    schedule_interval='23 0 * * *',
+    schedule_interval='40 8 * * *',
     catchup=False,
     tags=['data_quality'],
 )
