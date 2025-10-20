@@ -38,8 +38,8 @@ jobs:
         if: steps.changed-files-build.outputs.any_changed == 'true'
         run: |
           docker buildx build --push \
-            --tag ${{ vars.DOCKER_HUB_USERNAME }}:latest \
-            --tag ${{ vars.DOCKER_HUB_USERNAME }}:${{ github.sha }} .
+            --tag ${{ vars.DOCKER_HUB_NAMESPACE }}/${{ vars.DOCKER_HUB_REPOSITORY }}:latest \
+            --tag ${{ vars.DOCKER_HUB_NAMESPACE }}/${{ vars.DOCKER_HUB_REPOSITORY }}:${{ github.sha }} .
   unit-integration-tests:
     runs-on: ubuntu-latest
     needs: build
