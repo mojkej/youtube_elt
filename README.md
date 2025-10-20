@@ -21,9 +21,8 @@ Ce projet est un pipeline ELT (Extract, Load, Transform) qui collecte les donné
 
 ## Illustration de l'architecture
 
-- Ajoutez votre image d'architecture ici : `/docs/architecture.png`
 - Exemple d'insertion :
-  ![Architecture](/docs/architecture.png)
+  ![Architecture](/docs/architecture.jpg)
 
 ## Données — exemples
 
