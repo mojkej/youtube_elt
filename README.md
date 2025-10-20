@@ -4,7 +4,7 @@
 
 ---
 
-Ce projet est un pipeline ELT (Extract, Load, Transform) qui collecte les données YouTube du youtubeur français Squeezie, les stocke dans une base PostgreSQL (schéma `staging` puis `core`) et propose des vérifications de qualité. L'objectif final (avec un data scientist) est de construire un modèle permettant d'estimer/prédire le chiffre d'affaires généré par une chaîne YouTube à partir des métriques publiques (vues, likes, durée, fréquence, etc.).
+Ce projet est un pipeline ELT (Extract, Load, Transform) qui collecte les données YouTube du youtubeur français Squeezie, les stocke dans une base PostgreSQL (schéma `staging` puis `core`) et propose des vérifications de qualité. L'objectif final (avec un data scientist) est de construire un modèle permettant d'estimer/prédire le chiffre d'affaires généré par une chaîne YouTube à partir des métriques publiques et la transformation des données.
 
 ## Architecture
 
@@ -49,15 +49,6 @@ Ce projet est un pipeline ELT (Extract, Load, Transform) qui collecte les donné
 - Capture de la requête Postman utilisée pour tester la récupération des données :
   ![Postman](/docs/postman.png)
 
-## But du projet
-
----
-
-Le but est d'extraire et préparer les données YouTube pour ensuite, avec un data scientist :
-
-- Définir une variable cible (ex. CA estimé) : on peut approximer le CA par une métrique comme vues * CPM estimé, puis affiner avec données additionnelles si disponibles.
-- Construire un jeu d'entraînement avec features temporelles, engagement, durée, catégorisation du contenu, etc.
-- Entraîner et déployer un modèle prédictif (régression ou modèles plus complexes).
 
 ## Prérequis
 
@@ -89,16 +80,8 @@ Le but est d'extraire et préparer les données YouTube pour ensuite, avec un da
 3. Dans l'UI Airflow :
    - lancer le DAG `produce_csv_youtube` pour lancer l'extraction.
    - Le DAG `produce_csv_youtube` déclenche ensuite `update_db`, puis les checks de qualité.
+  
 
-## Bonnes pratiques pour la production
-
----
-
-- Stocker les CSV/intermédiaires dans S3/GCS (éviter stockage local).
-- Utiliser un exécuteur Airflow robuste (Kubernetes ou Celery) en production.
-- Gérer secrets via un secrets backend (Vault, GCP Secret Manager, AWS Secrets Manager).
-- CI/CD : tests unitaires, scanning de sécurité, build d'images Docker et déploiement automatisé.
-- Monitoring & alerting pour les DAGs (SLAs, métriques d'échec).
 
 ## Prochaines étapes pour la partie ML (prévision de CA)
 
